@@ -1,6 +1,10 @@
 # Project settings
 IMAGE_NAME=docent/cluster-bare-autoscaler
+METRICS_IMAGE_NAME=docent/metrics-exporter
+WOL_IMAGE_NAME=docent/wol-agent
 TAG ?= $(shell git describe --tags --always --dirty)
+METRICS_TAG ?= 0.2.0
+WOL_TAG ?= 0.2.0
 PLATFORMS=linux/amd64,linux/arm64
 GO               ?= go
 PKG              ?= ./...
@@ -68,13 +72,41 @@ build_binary:
 	-o bin/$(BIN_NAME) ./main.go
 
 .PHONY: build_image
-build_image: build_binary
-	docker build --build-arg VERSION=$(TAG) -t $(IMAGE_NAME):$(TAG) .
+build_image:
+	KO_DOCKER_REPO=$(IMAGE_NAME) ko publish --local --tags=$(TAG) --bare .
+
+
+.PHONY: build_metrics_image
+build_metrics_image:
+	KO_DOCKER_REPO=$(METRICS_IMAGE_NAME) ko publish --local --tags=$(METRICS_TAG) --bare ./metrics-daemonset
+
+
+.PHONY: build_wol_image
+build_wol_image:
+	KO_DOCKER_REPO=$(WOL_IMAGE_NAME) ko publish --local --tags=$(WOL_TAG) --bare ./wol-agent
+
+
+.PHONY: build_images
+build_images: build_image build_metrics_image build_wol_image
 
 
 .PHONY: build_and_publish_image
 build_and_publish_image:
 	KO_DOCKER_REPO=$(IMAGE_NAME) ko publish --tags=$(TAG) --bare
+
+
+.PHONY: publish_metrics_image
+publish_metrics_image:
+	KO_DOCKER_REPO=$(METRICS_IMAGE_NAME) ko publish --tags=$(METRICS_TAG) --bare ./metrics-daemonset
+
+
+.PHONY: publish_wol_image
+publish_wol_image:
+	KO_DOCKER_REPO=$(WOL_IMAGE_NAME) ko publish --tags=$(WOL_TAG) --bare ./wol-agent
+
+
+.PHONY: build_and_publish_images
+build_and_publish_images: build_and_publish_image publish_metrics_image publish_wol_image
 
 .PHONY: clean
 clean:

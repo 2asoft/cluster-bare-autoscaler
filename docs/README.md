@@ -191,8 +191,20 @@ CONTAINER_RUNTIME=podman make helm-checks
 ### Build container image (multi-arch with `ko`)
 
 ```bash
-make build_image
-make publish_image
+# controller image
+make build_image TAG=0.8.1 IMAGE_NAME=ghcr.io/<owner>/cluster-bare-autoscaler
+make build_and_publish_image TAG=0.8.1 IMAGE_NAME=ghcr.io/<owner>/cluster-bare-autoscaler
+
+# controller + chart sidecars
+make build_images \
+  TAG=0.8.1 IMAGE_NAME=ghcr.io/<owner>/cluster-bare-autoscaler \
+  METRICS_TAG=0.2.0 METRICS_IMAGE_NAME=ghcr.io/<owner>/metrics-exporter \
+  WOL_TAG=0.2.0 WOL_IMAGE_NAME=ghcr.io/<owner>/wol-agent
+
+make build_and_publish_images \
+  TAG=0.8.1 IMAGE_NAME=ghcr.io/<owner>/cluster-bare-autoscaler \
+  METRICS_TAG=0.2.0 METRICS_IMAGE_NAME=ghcr.io/<owner>/metrics-exporter \
+  WOL_TAG=0.2.0 WOL_IMAGE_NAME=ghcr.io/<owner>/wol-agent
 ```
 
 ### Run locally
